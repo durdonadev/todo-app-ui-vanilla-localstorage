@@ -1,120 +1,57 @@
-// let todos = [
-//     {
-//         text: "Breakfast",
-//         status: "todo", // done
-//         id: "3ea21f49-47d4-4e5b-b8ca-1376940c381d"
-//     },
-//     {
-//         text: "Dinner",
-//         status: "todo", // done
-//         id: "3ea21f49-47d4-4e5b-b8ca-1376940c381c"
-//     }
-// ];
+class Storage {
+    get() {
+        const todos = localStorage.getItem("todos");
+        if (!todos) return [];
+        return JSON.parse(todos);
+    }
 
-// const changeTodoStatus = (id, status) => {
-//     for (const todo of todos) {
-//         if (todo.id === id) {
-//             todo.status = status;
-//         }
-//     }
-//     console.log(todos);
-// };
+    add(todo) {
+        const existingTodos = this.get();
+        existingTodos.push(todo);
+        this.setTodos(existingTodos);
+    }
 
-// const deleteTodo = (id) => {
-//     todos = todos.filter((todo) => todo.id !== id);
-// };
+    delete(id) {
+        const existingTodos = this.get();
+        const keptTodos = existingTodos.filter((todo) => todo.id !== id);
+        this.setTodos(keptTodos);
+    }
 
-// const ul = document.querySelector(".todos");
+    setTodos(updatedTodos) {
+        localStorage.setItem("todos", JSON.stringify(updatedTodos));
+    }
 
-// const renderTodo = ({ text, id, status }) => {
-//     const li = document.createElement("li");
-//     li.innerText = text;
-
-//     const checkbox = document.createElement("input");
-//     checkbox.setAttribute("type", "checkbox");
-//     if (status === "done") {
-//         li.style.textDecoration = "line-through";
-//         checkbox.checked = true;
-//     }
-
-//     const closeIcon = document.createElement("span");
-//     closeIcon.innerHTML = "&times;";
-//     closeIcon.style.cursor = "pointer";
-
-//     closeIcon.addEventListener("click", (e) => {
-//         deleteTodo(id);
-//         renderTodos();
-//     });
-
-//     checkbox.addEventListener("change", (e) => {
-//         if (checkbox.checked) {
-//             li.style.textDecoration = "line-through";
-//             changeTodoStatus(id, "done");
-//         } else {
-//             li.style.textDecoration = "none";
-//             changeTodoStatus(id, "todo");
-//         }
-//         renderTodos();
-//     });
-
-//     li.appendChild(checkbox);
-//     li.appendChild(closeIcon);
-//     ul.appendChild(li);
-// };
-// const renderTodos = () => {
-//     ul.innerHTML = "";
-//     for (const todo of todos) {
-//         renderTodo(todo);
-//     }
-// };
-
-// renderTodos();
-
-// const form = document.querySelector("form");
-// form.addEventListener("submit", (event) => {
-//     event.preventDefault();
-//     const input = document.querySelector(".todo-input");
-//     const textValue = input.value;
-//     const id = crypto.randomUUID();
-//     const todo = {
-//         text: textValue,
-//         status: "todo",
-//         id: id
-//     };
-//     todos.push(todo);
-//     input.value = "";
-
-//     renderTodos();
-// });
+    changeStatus(id, status) {
+        const existingTodos = this.get();
+        for (const todo of existingTodos) {
+            if (todo.id === id) {
+                todo.status = status;
+                this.setTodos(existingTodos);
+                return;
+            }
+        }
+    }
+}
+const storage = new Storage();
 
 class TodoApp {
     static ul = document.querySelector(".todos");
-    constructor() {
-        this.todos = [
-            {
-                text: "Breakfast",
-                status: "todo", // done
-                id: "3ea21f49-47d4-4e5b-b8ca-1376940c381d"
-            },
-            {
-                text: "Dinner",
-                status: "todo", // done
-                id: "3ea21f49-47d4-4e5b-b8ca-1376940c381c"
-            }
-        ];
-    }
 
     changeTodoStatus = (id, status) => {
-        for (const todo of this.todos) {
-            if (todo.id === id) {
-                todo.status = status;
-            }
-        }
+        storage.changeStatus(id, status);
     };
 
     deleteTodo = (id) => {
-        this.todos = this.todos.filter((todo) => todo.id !== id);
+        storage.delete(id);
     };
+
+    addTodo = (todo) => {
+        storage.add(todo);
+    };
+
+    getAll() {
+        return storage.get();
+    }
 
     renderTodo = ({ text, id, status }) => {
         const li = document.createElement("li");
@@ -152,7 +89,7 @@ class TodoApp {
 
     renderTodos = () => {
         TodoApp.ul.innerHTML = "";
-        for (const todo of this.todos) {
+        for (const todo of storage.get()) {
             this.renderTodo(todo);
         }
     };
@@ -164,13 +101,17 @@ class TodoApp {
             event.preventDefault();
             const input = document.querySelector(".todo-input");
             const textValue = input.value;
+
+            if (textValue < 3) {
+                return;
+            }
             const id = crypto.randomUUID();
             const todo = {
                 text: textValue,
                 status: "todo",
                 id: id
             };
-            this.todos.push(todo);
+            this.addTodo(todo);
             input.value = "";
 
             this.renderTodos();
